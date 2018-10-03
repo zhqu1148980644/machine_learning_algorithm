@@ -1,5 +1,5 @@
 """
-objective = 1/2*sum() + b
+objective = min(1/2*sum() + b)
 eta = k11 + k22 - 2*k12
 
 Usage:
