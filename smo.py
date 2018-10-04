@@ -1,4 +1,6 @@
 """
+https://github.com/zhqu1148980644/machine_learning_algorithm
+
 objective = min(1/2*sum() + b)
 eta = k11 + k22 - 2*k12
 
