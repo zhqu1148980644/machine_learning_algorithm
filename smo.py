@@ -5,6 +5,10 @@
     Sequential minimal optimization (SMO) is an algorithm for solving the quadratic programming (QP) problem
     that arises during the training of support vector machines.
     It was invented by John Platt in 1998.
+Input:
+    0: pandas dataframe
+    1: first column of df must be tags of samples,should be 1 or -1.
+    2: rows of df represent samples
 
 Usage:
     0: download  https://www.kaggle.com/uciml/breast-cancer-wisconsin-data/
