@@ -1,22 +1,24 @@
 """
 time:2018-9-30
 update_time:2018-10-12
-https://github.com/zhqu1148980644/machine_learning_algorithm
 
 objective = min(1/2*sum() + b)
 eta = k11 + k22 - 2*k12
 
 Usage:
 0: download  https://www.kaggle.com/uciml/breast-cancer-wisconsin-data/
-1: choose your kernrel function
+1: choose your kernel function
 2: call SmoSVM class to get your SmoSVM object
 3: call SmoSVM object's fit() function
 4: call SmoSVM object's predict() function
 
 Reference:
+https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/smo-book.pdf
 https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf
 http://web.cs.iastate.edu/~honavar/smo-svm.pdf
 """
+from __future__ import division
+
 import numpy as np
 import pandas as pd
 
@@ -52,14 +54,14 @@ class SmoSVM(object):
             try:
                 i1, i2 = self.choose_alpha.send(state)
                 state = None
-                # show none-obey-kkt samples' number
+                # show non-obey-kkt samples' number
                 # from collections import Counter
                 # result = []
                 # for i in self._all_samples:
                 #     result.append(self._check_obey_KKT(i))
                 # print(Counter(result).get(True))
             except StopIteration:
-                print("Optimization done, every sample satisfy the KKT condition!")
+                print("Optimization done!\r\nEvery sample satisfy the KKT condition!")
                 # for i in self._all_samples:
                 #     if self._check_obey_KKT(i):
                 #         raise ValueError('some sample not fit KKT condition')
@@ -88,16 +90,16 @@ class SmoSVM(object):
             if not (np.float64(0) < a2_new < self.c) and not (np.float64(0) < a1_new < self.c):
                 b = (b1_new + b2_new) / 2.0
             b_old = self.b
-            self.b = b
+            self._b = b
 
-            # 4:  update error value,here we only calculate those none-bound samples' error
+            # 4:  update error value,here we only calculate those non-bound samples' error
             self._unbound = [i for i in self._all_samples if self._is_unbound(i)]
             for s in self.unbound:
                 if s == i1 or s == i2:
                     continue
                 self._error[s] += y1 * (a1_new - a1) * K(i1, s) + y2 * (a2_new - a2) * K(i2, s) + (self.b - b_old)
 
-            # if i1 or i2 is none-bound,update there error value to zero
+            # if i1 or i2 is non-bound,update there error value to zero
             if self._is_unbound(i1):
                 self._error[i1] = 0
 
@@ -152,7 +154,7 @@ class SmoSVM(object):
     def _e(self, index):
         """
         Two cases:
-            1:Sample[index] is none-bound,Fetch error from list (_error)
+            1:Sample[index] is non-bound,Fetch error from list (_error)
             2:sample[index] is bound,Use predicted value deduct true value (g(xi) - yi)
 
         """
@@ -266,7 +268,7 @@ class SmoSVM(object):
         """
         Choose first alpha ;steps:
            1:Fisrt loop over all sample
-           2:Second loop over all none-bound samples till all none-bound samples does not voilate kkt condition.
+           2:Second loop over all non-bound samples till all non-bound samples does not voilate kkt condition.
            3:Repeat this two process endlessly,till all samples does not voilate kkt condition samples after first loop.
         """
         while True:
@@ -277,18 +279,18 @@ class SmoSVM(object):
                 all_not_obey = False
                 yield from self._choose_a2(i1)
 
-            # none-bound sample
-            print('scanning none-bound sample!')
+            # non-bound sample
+            print('scanning non-bound sample!')
             while True:
                 not_obey = True
                 for i1 in [i for i in self._all_samples if self._check_obey_kkt(i) and self._is_unbound(i)]:
                     not_obey = False
                     yield from self._choose_a2(i1)
                 if not_obey:
-                    print('all none-bound sample fits the KKT condition!')
+                    print('all non-bound samples fit the KKT condition!')
                     break
             if all_not_obey:
-                print('all sample fits the KKT condition.optimization done!')
+                print('all samples fit the KKT condition! Optimization done!')
                 break
         return False
 
@@ -296,7 +298,7 @@ class SmoSVM(object):
         """
         Choose the second alpha by using heuristic algorithm ;steps:
            1:Choosed alpha2 which get the maximum step size (|E1 - E2|).
-           2:Start in a random point,loop over all none-bound samples till alpha1 and alpha2 are optimized.
+           2:Start in a random point,loop over all non-bound samples till alpha1 and alpha2 are optimized.
            3:Start in a random point,loop over all samples till alpha1 and alpha2 are optimized.
         """
         self._unbound = [i for i in self._all_samples if self._is_unbound(i)]
@@ -425,20 +427,22 @@ class Kernel(object):
         return self._kernel_name
 
 
-def count_time(func):
-    def call_func(*args, **kwargs):
-        import time
-        start_time = time.time()
-        func(*args, **kwargs)
-        end_time = time.time()
-        print('\r\ncost {} seconds'.format(end_time - start_time))
+def count_time(title='Process'):
+    def count(func):
+        def call_func(*args, **kwargs):
+            import time
+            start_time = time.time()
+            func(*args, **kwargs)
+            end_time = time.time()
+            print('\r\n{} cost {} seconds'.format(title, end_time - start_time))
 
-    return call_func
+        return call_func
+    return count
 
 
-@count_time
+@count_time(title='SMO algorithm')
 def test():
-    print('hello,start test svm by smo')
+    print('Hello!\r\nStart test svm by smo algorithm!')
     data = pd.read_csv(r'C:/Users/dell/Downloads/breast-cancer-wisconsin-data/data.csv')
 
     # 1: pre-processing data
@@ -449,7 +453,7 @@ def test():
     samples = np.array(data)[:, :]
 
     # 2: deviding data into train_data data and test_data data
-    train_data, test_data = samples[:400, :], samples[400:, :]
+    train_data, test_data = samples[:328, :], samples[328:, :]
     test_tags, test_samples = test_data[:, 0], test_data[:, 1:]
 
     # 3: choose kernel function,and set alphas to zero
@@ -466,7 +470,7 @@ def test():
     for i in range(test_tags.shape[0]):
         if test_tags[i] == predict[i]:
             score += 1
-    print('\r\nright: {}\r\nall: {}'.format(score, test_tags.shape[0]))
+    print('\r\nall: {}\r\nright: {}\r\nfalse: {}'.format(test_tags.shape[0], score, test_tags.shape[0] - score))
     print("Rough Accuracy: {}".format(score / test_tags.shape[0]))
 
 
