@@ -24,7 +24,7 @@ import pandas as pd
 
 
 class SmoSVM(object):
-    def __init__(self, train, alpha_list, kernel_func, cost=1.0, b=0.0, tolerance=0.0, auto_norm=True):
+    def __init__(self, train, kernel_func, alpha_list=None, cost=1.0, b=0.0, tolerance=0.0, auto_norm=True):
         self._init = True
         self._auto_norm = auto_norm
         self._cost = np.float64(cost)
@@ -33,7 +33,7 @@ class SmoSVM(object):
 
         self.tags = train[:, 0]
         self.samples = self._norm(train[:, 1:]) if self._auto_norm else train[:, 1:]
-        self.alphas = alpha_list
+        self.alphas = alpha_list if alpha_list is not None else np.zeros(train.shape[0])
         self.Kernel = kernel_func
 
         self._eps = 0.001
@@ -461,7 +461,7 @@ def test():
     al = np.zeros(train_data.shape[0])
 
     # 4: calculating best alphas using SMO algorithm and predict test_data samples
-    mysvm = SmoSVM(train=train_data, alpha_list=al, kernel_func=mykernel, cost=0.4, b=0.0, tolerance=0.001)
+    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, alpha_list=al, cost=0.4, b=0.0, tolerance=0.001)
     mysvm.fit()
     predict = mysvm.predict(test_samples)
 
