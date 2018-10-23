@@ -1,21 +1,22 @@
+# coding: utf-8
 """
-time:2018-9-30
-update_time:2018-10-12
+    Implementation of sequential minimal optimization(SMO) for support vector machines(SVM).
 
-objective = min(1/2*sum() + b)
-eta = k11 + k22 - 2*k12
+    Sequential minimal optimization (SMO) is an algorithm for solving the quadratic programming (QP) problem
+    that arises during the training of support vector machines.
+    It was invented by John Platt in 1998.
 
 Usage:
-0: download  https://www.kaggle.com/uciml/breast-cancer-wisconsin-data/
-1: choose your kernel function
-2: call SmoSVM class to get your SmoSVM object
-3: call SmoSVM object's fit() function
-4: call SmoSVM object's predict() function
+    0: download  https://www.kaggle.com/uciml/breast-cancer-wisconsin-data/
+    1: choose your kernel function.
+    2: call SmoSVM class to get your SmoSVM object.
+    3: call SmoSVM object's fit() function.
+    4: call SmoSVM object's predict() function.
 
 Reference:
-https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/smo-book.pdf
-https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf
-http://web.cs.iastate.edu/~honavar/smo-svm.pdf
+    https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/smo-book.pdf
+    https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf
+    http://web.cs.iastate.edu/~honavar/smo-svm.pdf
 """
 from __future__ import division
 
@@ -437,12 +438,14 @@ def count_time(title='Process'):
             print('\r\n{} cost {} seconds'.format(title, end_time - start_time))
 
         return call_func
+
     return count
 
 
 @count_time(title='SMO algorithm')
 def test():
     print('Hello!\r\nStart test svm by smo algorithm!')
+    # 0: change the dataset path
     data = pd.read_csv(r'C:/Users/dell/Downloads/breast-cancer-wisconsin-data/data.csv')
 
     # 1: pre-processing data
@@ -467,10 +470,11 @@ def test():
 
     # 5: check accuracy
     score = 0
+    test_num = test_tags.shape[0]
     for i in range(test_tags.shape[0]):
         if test_tags[i] == predict[i]:
             score += 1
-    print('\r\nall: {}\r\nright: {}\r\nfalse: {}'.format(test_tags.shape[0], score, test_tags.shape[0] - score))
+    print('\r\nall: {}\r\nright: {}\r\nfalse: {}'.format(test_num, score, test_num - score))
     print("Rough Accuracy: {}".format(score / test_tags.shape[0]))
 
 
