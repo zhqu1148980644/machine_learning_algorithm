@@ -31,6 +31,7 @@ Reference:
 from __future__ import division
 
 import os
+import sys
 import urllib.request
 
 import matplotlib.pyplot as plt
@@ -447,8 +448,6 @@ def test_cancel_data():
 def test_demonstration():
     # change stdout
     print('\r\nStart plot,please wait!!!')
-    import os
-    import sys
     sys.stdout = open(os.devnull, 'w')
 
     ax1 = plt.subplot2grid((2, 2), (0, 0))
