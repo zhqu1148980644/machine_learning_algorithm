@@ -294,11 +294,8 @@ class SmoSVM(object):
             oh = h1 * f1 + H * f2 + 1 / 2 * h1 ** 2 * K(i1, i1) + 1 / 2 * H ** 2 * K(i2, i2) + s * H * h1 * K(i1, i2)
             """
             # way 2
-            tmp_alphas = self.alphas.copy()
-            tmp_alphas[i1], tmp_alphas[i2] = l1, L
-            ol = self._get_objectives(tmp_alphas)
-            tmp_alphas[i1], tmp_alphas[i2] = h1, H
-            oh = self._get_objectives(tmp_alphas)
+            Use objective function check which alpha2 new could get the minimal objectives
+
             """
             if ol < (oh - self._eps):
                 a2_new = L
