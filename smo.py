@@ -446,6 +446,7 @@ def test_cancel_data():
 
 def test_demonstration():
     # change stdout
+    print('\r\nStart plot,please wait!!!')
     import os
     import sys
     sys.stdout = open(os.devnull, 'w')
@@ -463,14 +464,16 @@ def test_demonstration():
     ax4.set_title("rbf kernel svm,cost:500")
     test_rbf_kernel(ax4, cost=500)
 
+    sys.stdout = sys.__stdout__
+    print("Plot done!!!")
 
 def test_linear_kernel(ax, cost):
-    train_x, train_y = make_blobs(n_samples=1000, centers=2,
+    train_x, train_y = make_blobs(n_samples=500, centers=2,
                                   n_features=2, random_state=1)
     train_y[train_y == 0] = -1
     scaler = StandardScaler()
     train_x_scaled = scaler.fit_transform(train_x, train_y)
-    train_data = np.hstack((train_y.reshape(1000, 1), train_x_scaled))
+    train_data = np.hstack((train_y.reshape(500, 1), train_x_scaled))
     mykernel = Kernel(kernel='linear', degree=5, coef0=1, gamma=0.5)
     mysvm = SmoSVM(train=train_data, kernel_func=mykernel, cost=cost, tolerance=0.001, auto_norm=False)
     mysvm.fit()
@@ -523,3 +526,4 @@ if __name__ == '__main__':
     test_cancel_data()
     test_demonstration()
     plt.show()
+
