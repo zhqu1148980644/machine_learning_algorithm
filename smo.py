@@ -427,11 +427,11 @@ def test_cancel_data():
     test_tags, test_samples = test_data[:, 0], test_data[:, 1:]
 
     # 3: choose kernel function,and set initial alphas to zero(optional)
-    mykernel = Kernel(kernel='rbf', degree=5, coef0=1, gamma=0.5)
+    mykernel = Kernel(kernel='poly', degree=5, coef0=1, gamma=0.5)
     al = np.zeros(train_data.shape[0])
 
     # 4: calculating best alphas using SMO algorithm and predict test_data samples
-    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, alpha_list=al, cost=0.4, b=0.0, tolerance=0.001)
+    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, alpha_list=al, cost=0.4, b=0.0, tolerance=0)
     mysvm.fit()
     predict = mysvm.predict(test_samples)
 
@@ -465,6 +465,7 @@ def test_demonstration():
 
     sys.stdout = sys.__stdout__
     print("Plot done!!!")
+
 
 def test_linear_kernel(ax, cost):
     train_x, train_y = make_blobs(n_samples=500, centers=2,
@@ -523,6 +524,5 @@ def plot_partition_boundary(model, train_data, ax, resolution=100, colors=('b', 
 
 if __name__ == '__main__':
     test_cancel_data()
-    test_demonstration()
-    plt.show()
-
+    # test_demonstration()
+    # plt.show()
