@@ -16,6 +16,7 @@
 ## 2:Decision Tree
 ### Usage:
     from decision_tree import DecisionTree
+    
     tree = DecisionTree(criterion='gini', n_features=None, max_depth=20, min_impurity=1e-6)
     tree.fit(train_data)
     prediction = tree.predict(test_data)
@@ -25,6 +26,7 @@
     from decision_tree import DecisionTree
     from random_forest import RandomForest
     from smo import Kernel, SmoSVM
+    
     # use cart tree
     tree_args = {'criterion': 'gini', 'n_features': 7, 'max_depth': 15, 'min_impurity': 1e-6}
     rf = RandomForest(DecisionTree, n_trees=100, method='vote', samples_ratio=1.0, oob_estimate=True,model_args=tree_args)
