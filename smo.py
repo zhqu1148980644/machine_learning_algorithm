@@ -7,9 +7,9 @@
     It was invented by John Platt in 1998.
 
 Input:
-    0: pandas dataframe
-    1: first column of dataframe must be tags of samples,should be 1 or -1.
-    2: rows of dataframe represent samples
+    0: numpy's matrix
+    1: first column of matrix must be tags of samples,should be 1 or -1.
+    2: rows of matrix represent samples
 
 Usage:
     Command:
@@ -19,8 +19,8 @@ Usage:
 
         kernel = Kernel(kernel='poly', degree=3., coef0=1., gamma=0.5)
         init_alphas = np.zeros(train.shape[0])
-        SVM = SmoSVM(train=train, alpha_list=init_alphas, kernel_func=kernel, cost=0.4, b=0.0, tolerance=0.001)
-        SVM.fit()
+        SVM = SmoSVM(alpha_list=init_alphas, kernel_func=kernel, cost=0.4, b=0.0, tolerance=0.001)
+        SVM.fit(train)
         predict = SVM.predict(test_samples)
 
 Reference:
@@ -32,40 +32,32 @@ from __future__ import division
 
 import os
 import sys
-import urllib.request
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn.datasets import make_blobs, make_circles
 from sklearn.preprocessing import StandardScaler
 
-CANCER_DATASET_URL = 'http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data'
+from util import ModelEvaluator
+from util import count
+from util import load_cancer_data, load_sonar_data
 
 
 class SmoSVM(object):
-    def __init__(self, train, kernel_func, alpha_list=None, cost=0.4, b=0.0, tolerance=0.001, auto_norm=True):
+    def __init__(self, kernel_func, alpha_list=None, cost=0.4, b=0.0, tolerance=0.001, auto_norm=True):
         self._init = True
         self._auto_norm = auto_norm
         self._c = np.float64(cost)
         self._b = np.float64(b)
         self._tol = np.float64(tolerance) if tolerance > 0.0001 else np.float64(0.001)
-
-        self.tags = train[:, 0]
-        self.samples = self._norm(train[:, 1:]) if self._auto_norm else train[:, 1:]
-        self.alphas = alpha_list if alpha_list is not None else np.zeros(train.shape[0])
-        self.Kernel = kernel_func
-
         self._eps = 0.001
-        self._all_samples = list(range(self.length))
-        self._K_matrix = self._calculate_k_matrix()
-        self._error = np.zeros(self.length)
-        self._unbound = []
-
-        self.choose_alpha = self._choose_alphas()
+        self.Kernel = kernel_func
+        self.alphas = alpha_list
 
     # Calculate alphas using SMO algorithsm
-    def fit(self):
+    def fit(self, train):
+        self.init(train)
+
         K = self._k
         state = None
         while True:
@@ -75,7 +67,7 @@ class SmoSVM(object):
                 i1, i2 = self.choose_alpha.send(state)
                 state = None
             except StopIteration:
-                print("Optimization done!\r\nEvery sample satisfy the KKT condition!")
+                # print("Optimization done!\r\nEvery sample satisfy the KKT condition!")
                 break
 
             # 2: calculate new alpha2 and new alpha1
@@ -92,14 +84,13 @@ class SmoSVM(object):
             # 3: update threshold(b)
             b1_new = np.float64(-e1 - y1 * K(i1, i1) * (a1_new - a1) - y2 * K(i2, i1) * (a2_new - a2) + self._b)
             b2_new = np.float64(-e2 - y2 * K(i2, i2) * (a2_new - a2) - y1 * K(i1, i2) * (a1_new - a1) + self._b)
-            if 0.0 < a1_new < self._c:
-                b = b1_new
-            if 0.0 < a2_new < self._c:
-                b = b2_new
-            if not (np.float64(0) < a2_new < self._c) and not (np.float64(0) < a1_new < self._c):
-                b = (b1_new + b2_new) / 2.0
             b_old = self._b
-            self._b = b
+            if 0.0 < a1_new < self._c:
+                self._b = b1_new
+            if 0.0 < a2_new < self._c:
+                self._b = b2_new
+            if not (np.float64(0) < a2_new < self._c) and not (np.float64(0) < a1_new < self._c):
+                self._b = (b1_new + b2_new) / 2.0
 
             # 4:  update error value,here we only calculate those non-bound samples' error
             self._unbound = [i for i in self._all_samples if self._is_unbound(i)]
@@ -114,10 +105,13 @@ class SmoSVM(object):
             if self._is_unbound(i2):
                 self._error[i2] = 0
 
+        self.choose_alpha = None
+        return self
+
     # Predict test samles
     def predict(self, test_samples, classify=True):
 
-        if test_samples.shape[1] > self.samples.shape[1]:
+        if len(test_samples[0]) > self.samples.shape[1]:
             raise ValueError("Test samples' feature length not equal to train samples")
 
         if self._auto_norm:
@@ -134,6 +128,20 @@ class SmoSVM(object):
             else:
                 results.append(result)
         return np.array(results)
+
+    # init data
+    def init(self, train):
+        self.tags = train[:, 0]
+        self.samples = self._norm(train[:, 1:]) if self._auto_norm else train[:, 1:]
+        self.length = self.samples.shape[0]
+        self.alphas = self.alphas if self.alphas is not None else np.zeros(self.length)
+
+        self._all_samples = list(range(self.length))
+        self._K_matrix = self._calculate_k_matrix()
+        self._error = np.zeros(self.length)
+        self._unbound = []
+
+        self.choose_alpha = self._choose_alphas()
 
     # Check if alpha violate KKT condition
     def _check_obey_kkt(self, index):
@@ -202,23 +210,23 @@ class SmoSVM(object):
         while True:
             all_not_obey = True
             # all sample
-            print('scanning all sample!')
+            # print('scanning all sample!')
             for i1 in [i for i in self._all_samples if self._check_obey_kkt(i)]:
                 all_not_obey = False
                 yield from self._choose_a2(i1)
 
             # non-bound sample
-            print('scanning non-bound sample!')
+            # print('scanning non-bound sample!')
             while True:
                 not_obey = True
                 for i1 in [i for i in self._all_samples if self._check_obey_kkt(i) and self._is_unbound(i)]:
                     not_obey = False
                     yield from self._choose_a2(i1)
                 if not_obey:
-                    print('all non-bound samples fit the KKT condition!')
+                    # print('all non-bound samples fit the KKT condition!')
                     break
             if all_not_obey:
-                print('all samples fit the KKT condition! Optimization done!')
+                # print('all samples fit the KKT condition! Optimization done!')
                 break
         return False
 
@@ -346,10 +354,6 @@ class SmoSVM(object):
     def support(self):
         return [i for i in range(self.length) if self._is_support(i)]
 
-    @property
-    def length(self):
-        return self.samples.shape[0]
-
 
 class Kernel(object):
     def __init__(self, kernel, degree=1.0, coef0=0.0, gamma=1.0):
@@ -389,50 +393,23 @@ class Kernel(object):
         return self._kernel_name
 
 
-def count_time(func):
-    def call_func(*args, **kwargs):
-        import time
-        start_time = time.time()
-        func(*args, **kwargs)
-        end_time = time.time()
-        print('smo algorithm cost {} seconds'.format(end_time - start_time))
-
-    return call_func
-
-
-@count_time
-def test_cancel_data():
+@count
+def test_svm():
     print('Hello!\r\nStart test svm by smo algorithm!')
-    # 0: download dataset and load into pandas' dataframe
-    if not os.path.exists(r'cancel_data.csv'):
-        request = urllib.request.Request(
-            CANCER_DATASET_URL,
-            headers={'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}
-        )
-        response = urllib.request.urlopen(request)
-        content = response.read().decode('utf-8')
-        with open(r'cancel_data.csv', 'w') as f:
-            f.write(content)
-
-    data = pd.read_csv(r'cancel_data.csv', header=None)
-
-    # 1: pre-processing data
-    del data[data.columns.tolist()[0]]
-    data = data.dropna(axis=0)
-    data = data.replace({'M': np.float64(1), 'B': np.float64(-1)})
-    samples = np.array(data)[:, :]
+    # 1: load data
+    samples = load_cancer_data()
 
     # 2: deviding data into train_data data and test_data data
-    train_data, test_data = samples[:328, :], samples[328:, :]
+    train_data, test_data = samples[:340, :], samples[340:, :]
     test_tags, test_samples = test_data[:, 0], test_data[:, 1:]
 
     # 3: choose kernel function,and set initial alphas to zero(optional)
-    mykernel = Kernel(kernel='poly', degree=5, coef0=1, gamma=0.5)
+    mykernel = Kernel(kernel='rbf', degree=5, coef0=1, gamma=0.5)
     al = np.zeros(train_data.shape[0])
 
     # 4: calculating best alphas using SMO algorithm and predict test_data samples
-    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, alpha_list=al, cost=0.4, b=0.0, tolerance=0)
-    mysvm.fit()
+    mysvm = SmoSVM(kernel_func=mykernel, alpha_list=al, cost=0.4, b=0.0, tolerance=0, auto_norm=True)
+    mysvm.fit(train_data)
     predict = mysvm.predict(test_samples)
 
     # 5: check accuracy
@@ -445,9 +422,25 @@ def test_cancel_data():
     print("Rough Accuracy: {}".format(score / test_tags.shape[0]))
 
 
+def evaluate_svm():
+    print('test cancel data using svm')
+    data = load_cancer_data()
+    mykernel = Kernel(kernel='poly', degree=5, coef0=1, gamma=0.5)
+    svm_args = {'kernel_func': mykernel, 'cost': 0.4, 'b': 0.0, 'tolerance': 0}
+    result = ModelEvaluator(model=SmoSVM, samples=data, method='cross', fold=10, model_args=svm_args).evaluate()
+    print(result)
+    print('test sonar data using svm')
+    data = load_sonar_data()
+    mykernel = Kernel(kernel='poly', degree=5, coef0=1, gamma=0.5)
+    svm_args = {'kernel_func': mykernel, 'cost': 0.4, 'b': 0.0, 'tolerance': 0}
+    result = ModelEvaluator(model=SmoSVM, samples=data, method='cross', fold=10, model_args=svm_args).evaluate()
+    print(result)
+
+
 def test_demonstration():
     # change stdout
     print('\r\nStart plot,please wait!!!')
+    tmp = sys.stdout
     sys.stdout = open(os.devnull, 'w')
 
     ax1 = plt.subplot2grid((2, 2), (0, 0))
@@ -463,7 +456,7 @@ def test_demonstration():
     ax4.set_title("rbf kernel svm,cost:500")
     test_rbf_kernel(ax4, cost=500)
 
-    sys.stdout = sys.__stdout__
+    sys.stdout = tmp
     print("Plot done!!!")
 
 
@@ -475,8 +468,8 @@ def test_linear_kernel(ax, cost):
     train_x_scaled = scaler.fit_transform(train_x, train_y)
     train_data = np.hstack((train_y.reshape(500, 1), train_x_scaled))
     mykernel = Kernel(kernel='linear', degree=5, coef0=1, gamma=0.5)
-    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, cost=cost, tolerance=0.001, auto_norm=False)
-    mysvm.fit()
+    mysvm = SmoSVM(kernel_func=mykernel, cost=cost, tolerance=0.001, auto_norm=False)
+    mysvm.fit(train_data)
     plot_partition_boundary(mysvm, train_data, ax=ax)
 
 
@@ -487,8 +480,8 @@ def test_rbf_kernel(ax, cost):
     train_x_scaled = scaler.fit_transform(train_x, train_y)
     train_data = np.hstack((train_y.reshape(500, 1), train_x_scaled))
     mykernel = Kernel(kernel='rbf', degree=5, coef0=1, gamma=0.5)
-    mysvm = SmoSVM(train=train_data, kernel_func=mykernel, cost=cost, tolerance=0.001, auto_norm=False)
-    mysvm.fit()
+    mysvm = SmoSVM(kernel_func=mykernel, cost=cost, tolerance=0.001, auto_norm=False)
+    mysvm.fit(train_data)
     plot_partition_boundary(mysvm, train_data, ax=ax)
 
 
@@ -523,6 +516,7 @@ def plot_partition_boundary(model, train_data, ax, resolution=100, colors=('b', 
 
 
 if __name__ == '__main__':
-    test_cancel_data()
-    # test_demonstration()
-    # plt.show()
+    test_svm()
+    evaluate_svm()
+    test_demonstration()
+    plt.show()
