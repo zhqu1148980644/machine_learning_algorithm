@@ -186,6 +186,4 @@ class ModelEvaluator(object):
                 index = random.randrange(self.length)
                 train.append(index)
             yield train, allsamples - set(train)
-
-
-load_sonar_data()
+  
