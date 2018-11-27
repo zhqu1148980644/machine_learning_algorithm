@@ -7,9 +7,9 @@
     It was invented by John Platt in 1998.
 
 Input:
-    0: numpy's matrix
-    1: first column of matrix must be tags of samples,should be 1 or -1.
-    2: rows of matrix represent samples
+    0: numpy's ndarray
+    1: first column of ndarray must be tags of samples,should be 1 or -1.
+    2: rows of ndarray represent samples
 
 Usage:
     Command:
@@ -131,6 +131,9 @@ class SmoSVM(object):
 
     # init data
     def init(self, train):
+        if isinstance(train, np.matrix):
+            train = np.array(train)
+
         self.tags = train[:, 0]
         self.samples = self._norm(train[:, 1:]) if self._auto_norm else train[:, 1:]
         self.length = self.samples.shape[0]

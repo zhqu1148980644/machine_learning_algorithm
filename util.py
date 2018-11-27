@@ -97,7 +97,7 @@ class ModelEvaluator(object):
         self.fold = fold
         self.model_args = model_args
 
-        self.samples = samples
+        self.samples = np.array(samples) if isinstance(samples, np.matrix) else samples
         self.tags = self.samples[:, 0]
         self.length = self.samples.shape[0]
         self.trained_subsamples = []
@@ -186,4 +186,3 @@ class ModelEvaluator(object):
                 index = random.randrange(self.length)
                 train.append(index)
             yield train, allsamples - set(train)
-  
