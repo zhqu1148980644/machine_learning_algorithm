@@ -48,7 +48,7 @@ def count(func):
     return c
 
 
-class Louvain1(object):
+class Louvain(object):
     def __init__(self, graph, partition=None, res=1., random_state=None):
         """
         find best community partition using Louvain algorithm.
@@ -500,7 +500,7 @@ if __name__ == "__main__":
     colormap = plt.cm.gist_ncar
     # generate graph randomly.
     G = nx.erdos_renyi_graph(100, 0.05, seed=2)
-    louvain = Louvain1(G, res=1.0, random_state=1)
+    louvain = Louvain(G, res=1.0, random_state=1)
     part = louvain.split()
     partitions = louvain.partitions
     level = 0
