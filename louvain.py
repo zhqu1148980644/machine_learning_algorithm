@@ -49,9 +49,13 @@ def count(func):
 
 
 class Louvain(object):
+    """
+    Louvain algorithm.
+    """
+
     def __init__(self, graph, partition=None, res=1., random_state=None):
         """
-        find best community partition using Louvain algorithm.
+        Find best community partition using Louvain algorithm.
 
         :param graph: non-direction networkx.Graph.
         :param partition: dict of each node's community tag.
@@ -68,7 +72,7 @@ class Louvain(object):
     @staticmethod
     def _check(random_state, graph):
         """
-        check graph and randomstate.
+        Check graph and randomstate.
 
         :param random_state:  np.random.RandomState/int/np.integer/np.random.mtrand._rand
         :param graph: none-direction nwtworkx.Graph
@@ -120,9 +124,9 @@ class Louvain(object):
     @staticmethod
     def _find_best_partition(random_state, part, resolution=1.):
         """
-        First step (Core) of Louvain algorithm.
-        Iteration through all nodes till a local maximum of modularity is attained. i.e.
-        When no individual move can improve the modularity(delta should be positive and higher than a threshhold)
+        First step (Core) of Louvain algorithm.\n
+        Iteration through all nodes till a local maximum of modularity is attained. i.e.\n
+        When no individual move can improve the modularity(delta should be positive and higher than a threshhold)\n
 
         :param random_state: np.random.RandomState,used for generating random permutation of all nodes.
         :param part: Partition object.
@@ -169,8 +173,8 @@ class Louvain(object):
     def combine_nodes(graph, partition):
         """
         @staticmethod
-        Combine nodes share the same community tag into a single node.
-        Return a new graph constructed from single nodes.
+        Combine nodes share the same community tag into a single node.\n
+        Return a new graph constructed from single nodes.\n
 
         :param graph: networkx.Graph.
         :param partition: dict of each node's community tag.
@@ -192,10 +196,10 @@ class Louvain(object):
     @property
     def partitions(self):
         """
-        List of each level's Partition object.
-        Be cautious that number of node becomes smaller with the increase of level caused by 'combine' function.
-        There is a equal relation between tags of current level's partition and nodes of the next level.
-        Use Louvain.get_partition(level=None) instead under normal circumstances.
+        List of each level's Partition object.\n
+        Be cautious that number of nodes becomes smaller with the increase of level caused by 'combine' function.\n
+        There is a equal relation between tags of current level's partition and nodes of the next level.\n
+        Use Louvain.get_partition(level=None) instead under normal circumstances.\n
 
         :return: a list of each level's Partition object.
         """
@@ -213,6 +217,7 @@ class Louvain(object):
             level = max_level
         if not (0 <= level <= max_level):
             raise ValueError("level must between <{}-{}>".format(0, max_level))
+        # if max_level equal to 1,partition(1) have not been sorted.
         if max_level == 1 and level == 1:
             return self._parts[1].partition.copy()
 
@@ -228,10 +233,10 @@ class Louvain(object):
     @staticmethod
     def get_modularity(graph, partition):
         """
-        @staticmethod
-        Calculate modularity of this partition.
-        This could be time-consuming.
-        Use Partition.modularity instead if there is a Partition object.
+        @staticmethod\n
+        Calculate modularity of this partition.\n
+        This could be time-consuming.\n
+        Use Partition.modularity instead if there is a Partition object.\n
 
         :param graph: networkx.Graph
         :param partition: dict of each node's community tag.
@@ -244,15 +249,15 @@ class Louvain(object):
 
 class Partition(object):
     """
-    Partition object for containing each partition's information which will be used in Louvain algorithm.
-    Contains four properties:
-    type: default_dict(int)
-    0: total_weight(float/int)  total weights of edges within this graph, i.e. (m)
-    1: node_com a partition dict of each node's community tag.
-    2: node_in  weight of edge from this node to this node,i.e. self-loop weight.
-    3: node_tot sum weights of edges from all nodes in graph to this node.i.e total degree(one-side)
-    4: com_in   sum weights of edges within this community.
-    5: com_tot  sum weights of edges from all nodes in graph to nodes in this community.i.e. total degree(one-side)
+    Partition object for containing each partition's information which will be used in Louvain algorithm.\n
+    Contains four properties:\n
+    type: default_dict(int).\n
+    0: total_weight(float/int)  total weights of edges within this graph, i.e. (m).\n
+    1: node_com a partition dict of each node's community tag.\n
+    2: node_in  weight of edge from this node to this node,i.e. self-loop weight.\n
+    3: node_tot sum weights of edges from all nodes in graph to this node.i.e total degree(one-side).\n
+    4: com_in   sum weights of edges within this community.\n
+    5: com_tot  sum weights of edges from all nodes in graph to nodes in this community.i.e. total degree(one-side).\n
     """
     __slots__ = ("level", "total_weight", "_graph", "_node_com", "_node_edges_in", "_node_degree_tot",
                  "_com_edges_in", "_com_degree_tot")
@@ -384,16 +389,16 @@ class Partition(object):
 
     def neigbor_communities(self, node):
         """
-        Calculate ki_in of node to each neighboring communities.
-        Pay attention to the definition of ki_in and sum_in:
+        Calculate ki_in of node to each neighboring communities.\n
+        Pay attention to the definition of ki_in and sum_in:\n
         ki_in:
-            When we calculate neigbor_communitys.There has a disequilibrium between original community and other community.
-            Which is because self-loop will be encountered when scanning one node's neighbors in it's original community.
-            While there is no chance of adding self-loop when calculating neighbors in other community.
-            Thus we don't count self-loop in this step and self-loop add (-self-loop) will be zero in calculation of delta.
-            Whereas self-loop should not be ignored in the step of updating information in remove and insert.
+            When we calculate neigbor_communitys.There has a disequilibrium between original community and other community.\n
+            Which is because self-loop will be encountered when scanning one node's neighbors in it's original community.\n
+            While there is no chance of adding self-loop when calculating neighbors in other community.\n
+            Thus we don't count self-loop in this step and self-loop add (-self-loop) will be zero in calculation of delta.\n
+            Whereas self-loop should not be ignored in the step of updating information in remove and insert.\n
         sum_in:
-            both com_in and node_in contain self-loop.
+            both com_in and node_in contain self-loop.\n
 
         :param node: source node.
         :return: dict of sum of the weights from node to nodes in each neighboring community(include self's community).
@@ -427,8 +432,8 @@ class Partition(object):
     @staticmethod
     def sort_tag(old_node_com):
         """
-        @staticmethod
-        Renumber all communities' tags to consecutive intergers. i.e. 0-N.
+        @staticmethod\n
+        Renumber all communities' tags to consecutive intergers. i.e. 0-N.\n
 
         :param old_node_com: a dict of each node's community tag.
         :return: a dict of renumbered node_com.
