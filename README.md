@@ -39,3 +39,21 @@
     rf = RandomForest(SmoSVM, n_trees=100, method='vote', samples_ratio=1.0, oob_estimate=True,model_args=svm_args)
     rf.fit(train_data)
     prediction = rf.predict(test_data)
+
+## 4:Louvain algorith(for community detection)
+### Usage:
+    # Most parts are adopted from python-louvain package in pypi.
+    # Leiden algorithm which is an extension of Louvain algorithm is recommended.
+    # See https://github.com/vtraag/leidenalg
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    G = nx.erdos_renyi_graph(100, 0.05, seed=2)
+    louvain = Louvain1(G, res=1.0, random_state=1)
+    part = louvain.split()
+    partitions = louvain.partitions
+    level = 0
+    for _partition in partitions:
+        print("level:{} ".format(level), _partition)
+        level += 1
+    print("final partition: ", part)
