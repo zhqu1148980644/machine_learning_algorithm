@@ -203,17 +203,23 @@ class Louvain(object):
 
     def get_partition(self, level=None):
         """
-        Fetch partition at each level.level = <0 - len(self.partitions)>
+        Fetch partition at each level.level = <0 - len(self.partitions)-1>
 
-        :param level: level 0 represent the initial partition.level len(self.partitions) represent the final partition.
+        :param level: level 0 represent the initial partition.level len(self.partitions)-1 represent the final partition.
         :return: dict of each node's community tag in the state of specified level.
         """
+        max_level = len(self._parts) - 1
         if level is None:
-            level = len(self._parts)
+            level = max_level
+        if not (0 <= level <= max_level):
+            raise ValueError("level must between <{}-{}>".format(0, max_level))
+        if max_level == 1 and level == 1:
+            return self._parts[1].partition.copy()
+
         partition_copy = self._parts[0].partition.copy()
 
         for node in self._parts[0].partition.keys():
-            for _level in range(1, level):
+            for _level in range(1, level + 1):
                 com = partition_copy[node]
                 partition_copy[node] = self._parts[_level].partition[com]
 
