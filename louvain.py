@@ -217,14 +217,10 @@ class Louvain(object):
             level = max_level
         if not (0 <= level <= max_level):
             raise ValueError("level must between <{}-{}>".format(0, max_level))
-        # if max_level equal to 1,partition(1) have not been sorted.
-        if max_level == 1 and level == 1:
-            return self._parts[1].partition.copy()
+        partition_copy = self._parts[1].partition.copy()
 
-        partition_copy = self._parts[0].partition.copy()
-
-        for node in self._parts[0].partition.keys():
-            for _level in range(1, level + 1):
+        for node in self._parts[1].partition.keys():
+            for _level in range(2, level + 1):
                 com = partition_copy[node]
                 partition_copy[node] = self._parts[_level].partition[com]
 
@@ -517,6 +513,7 @@ if __name__ == "__main__":
     level = 0
     for _partition in partitions:
         print("level:{} ".format(level), _partition)
+        print(len(_partition.partition.values()))
         level += 1
     print("final partition: ", part)
 
