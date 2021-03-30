@@ -57,10 +57,7 @@ class DecisionTree(object):
         return self
 
     def predict(self, test_samples):
-        results = []
-        for sample in test_samples:
-            results.append(self.scan_tree(sample, self.tree))
-        return results
+        return [self.scan_tree(sample, self.tree) for sample in test_samples]
 
     # for every node ,use it's value to choose searching path.
     def scan_tree(self, sample, node):
@@ -186,10 +183,8 @@ class DecisionTree(object):
     def gini_index(self, index, feature, feature_value):
         left_index, right_index = self.split_left_right(index, feature, feature_value)
         sums = len(index)
-        gini_index = (len(left_index) / sums) * self.gini(left_index) \
+        return (len(left_index) / sums) * self.gini(left_index) \
                      + (len(right_index) / sums) * self.gini(right_index)
-
-        return gini_index
 
     def gini(self, index):
         tags = self.tags[index].tolist()
@@ -206,8 +201,7 @@ class DecisionTree(object):
         sums = len(index)
         hda = ((len(left_index) / sums) * self.ent(left_index)
                + (len(right_index) / sums) * self.ent(right_index))
-        gain = hd - hda
-        return gain
+        return hd - hda
 
     def ent(self, index):
         tags = self.tags[index].tolist()
@@ -304,8 +298,7 @@ class DiscreteTree(DecisionTree):
         for feature_value in counter.keys():
             portion = counter[feature_value] / sums
             iv -= portion * log(portion, 2)
-        gain_ratio = gain / iv
-        return gain_ratio
+        return gain / iv
 
     def find_best_point(self, node, features):
         # another slow way: map(lambda _feature: [_feature, self.gain(index, _feature)], features)

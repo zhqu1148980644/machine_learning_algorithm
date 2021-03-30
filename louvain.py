@@ -65,8 +65,8 @@ class Louvain(object):
         self.graph = graph
         self.resolution = res
         self.random_state = self._check(random_state, graph)
-        self.partition_supplied = True if partition else False
-        self._parts = list()
+        self.partition_supplied = bool(partition)
+        self._parts = []
         self._parts.append(Partition(graph, partition))
 
     @staticmethod
@@ -267,7 +267,7 @@ class Partition(object):
         self.level = level
         self.total_weight = 0
         self._graph = graph
-        self._node_com = dict()
+        self._node_com = {}
         self._node_degree_tot = defaultdict(int)
         self._node_edges_in = defaultdict(int)
         self._com_degree_tot = defaultdict(int)
@@ -406,9 +406,9 @@ class Partition(object):
             edge_weight = datas.get('weight', 1)
             weights[neighbor_com] = weights[neighbor_com] + edge_weight
 
-        for com in weights.keys():
+        for com, value in weights.items():
             if com != self.node_com[node]:
-                weights[com] += self.node_in[node]
+                value += self.node_in[node]
 
         return weights
 
@@ -510,11 +510,9 @@ if __name__ == "__main__":
     louvain = Louvain(G, res=1.0, random_state=1)
     part = louvain.split()
     partitions = louvain.partitions
-    level = 0
-    for _partition in partitions:
+    for level, _partition in enumerate(partitions):
         print("level:{} ".format(level), _partition)
         print(len(_partition.partition.values()))
-        level += 1
     print("final partition: ", part)
 
     # plot graph.
@@ -522,11 +520,8 @@ if __name__ == "__main__":
     colors = [colormap(i) for i in np.linspace(0, 0.9, size)]
     print("final number of communities: ", size)
     pos = nx.spring_layout(G)
-    count = 0
-    for com in set(part.values()):
+    for count, com in enumerate(set(part.values())):
         list_nodes = [nodes for nodes in part.keys() if part[nodes] == com]
         nx.draw_networkx_nodes(G, pos, list_nodes, node_size=20, node_color=colors[count])
-        count += 1
-
     nx.draw_networkx_edges(G, pos, alpha=0.5)
     plt.show()

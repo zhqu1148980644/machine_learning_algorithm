@@ -57,7 +57,7 @@ class RandomForest(object):
         # another slow way: use Process and Queue,create core_num's process,1 task_queue and 1 result_queue.
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         obj_list = []
-        for i in range(self.n_trees):
+        for _ in range(self.n_trees):
             sub_samples_index = self.get_sub_samples(self.samples_ratio)
             sub_samples = self.samples[sub_samples_index]
             model = self.base_model(**self.model_args)
@@ -113,21 +113,16 @@ class RandomForest(object):
 
     # handle prediction generated from decison trees,use vote method in normal situations.
     def handle_predictions(self, predictions):
-        if self.method == 'vote':
-            counter = ((tag, predictions.count(tag)) for tag in set(predictions))
-            final_prediction = max(counter, key=lambda x: x[1])[0]
-        else:
+        if self.method != 'vote':
             raise ValueError
 
-        return final_prediction
+        counter = ((tag, predictions.count(tag)) for tag in set(predictions))
+        return max(counter, key=lambda x: x[1])[0]
 
     # random forest requires random samples get by bootstrap for each decision tree.
     def get_sub_samples(self, ratio):
         samples_num = round(self.length * ratio)
-        sub_samples_index = []
-        for j in range(samples_num):
-            sub_samples_index.append(random.randrange(self.length))
-        return sub_samples_index
+        return [random.randrange(self.length) for _ in range(samples_num)]
 
 
 def test_randomforest_cart():

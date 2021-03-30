@@ -85,8 +85,7 @@ def find_data(name, url):
         with open(r'other_file/{}.csv'.format(name), 'w') as f:
             f.write(content)
 
-    data = pd.read_csv(r'other_file/{}.csv'.format(name), header=None)
-    return data
+    return pd.read_csv(r'other_file/{}.csv'.format(name), header=None)
 
 
 class ModelEvaluator(object):
@@ -145,7 +144,7 @@ class ModelEvaluator(object):
         # k fold
         for subsample_index in range(fold):
             subsample = []
-            for i in range(subsample_length):
+            for _ in range(subsample_length):
                 index = random.randrange(len(allsamples))
                 subsample.append(allsamples.pop(index))
             subsamples_list.append(subsample)
@@ -168,7 +167,7 @@ class ModelEvaluator(object):
                 if self.tags[tag_index] == tags_list[i]:
                     tags_index_list[i].append(tag_index)
                     break
-        for fold_index in range(self.fold):
+        for _ in range(self.fold):
             train, test = [], []
             for i in range(tag_nums):
                 samples_index = random.sample(tags_index_list[i], len(tags_index_list[i]))
@@ -180,9 +179,9 @@ class ModelEvaluator(object):
     # bootstrap validation.
     def bootstrap_evaluate(self):
         allsamples = set(range(self.length))
-        for fold_index in range(self.fold):
+        for _ in range(self.fold):
             train = []
-            for i in range(self.length):
+            for _ in range(self.length):
                 index = random.randrange(self.length)
                 train.append(index)
             yield train, allsamples - set(train)
